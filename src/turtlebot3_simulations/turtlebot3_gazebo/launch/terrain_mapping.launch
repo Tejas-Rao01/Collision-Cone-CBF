@@ -1,0 +1,64 @@
+<launch>
+
+  <!-- Robot Params-->
+  <arg name="model" default="$(env TURTLEBOT3_MODEL)" doc="model type [burger, waffle, waffle_pi]"/>
+  <arg name="x_pos" default="0.0"/>
+  <arg name="y_pos" default="0.0"/>
+  <arg name="z_pos" default="0.0"/>
+
+  <!-- World Params-->
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(find turtlebot3_gazebo)/worlds/terrain.world"/>
+    <arg name="paused" value="false"/>
+    <arg name="use_sim_time" value="true"/>
+    <arg name="gui" value="true"/>
+    <arg name="headless" value="false"/>
+    <arg name="debug" value="false"/>
+  </include>
+
+  <param name="robot_description" command="$(find xacro)/xacro --inorder $(find turtlebot3_description)/urdf/turtlebot3_$(arg model).urdf.xacro" />
+
+  <!-- Spawn Robot -->
+  <node pkg="gazebo_ros" type="spawn_model" name="spawn_urdf" args="-urdf -model turtlebot3_$(arg model) -x $(arg x_pos) -y $(arg y_pos) -z $(arg z_pos) -param robot_description" />
+  
+  
+  <include file="$(find turtlebot3_bringup)/launch/turtlebot3_remote.launch">
+    <arg name="model" value="$(arg model)"/>
+  </include>
+
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find turtlebot3_gazebo)/rviz/turtlebot3_gazebo_model.rviz"/>
+
+    <!-- Publish turtlebot3 tf's. -->
+  <node pkg="robot_state_publisher" type="robot_state_publisher" name="waffle_state_publisher"/>
+
+  <!-- Publish tf 'base_footprint' as pose. -->
+  <node pkg="elevation_mapping_demos" type="tf_to_pose_publisher.py" name="waffle_pose_publisher">
+    <param name="from_frame" type="string" value="odom"/>
+    <param name="to_frame" type="string" value="base_footprint"/>
+  </node>
+
+
+  
+ <!-- Run a passthrough filter to down-sample the sensor point cloud.-->
+  <node pkg="nodelet" type="nodelet" name="pcl_manager" args="manager" output="screen"/>
+  <node pkg="nodelet" type="nodelet" name="voxel_grid" args="load pcl/VoxelGrid pcl_manager" output="screen">
+    <remap from="~input" to="/d435/depth/color/points"/>
+    <remap from="~output" to="/camera/depth/points_downsampled"/>
+    <rosparam>
+      filter_field_name: z
+      filter_limit_min: 0.01
+      filter_limit_max: 6.0  <!-- Limit the range of points to forward to 6 meters in viewing direction-->
+      filter_limit_negative: False
+      leaf_size: 0.05  <!-- Limit the density to 5 cm-->
+    </rosparam>
+  </node>
+
+<!-- Launch elevation mapping node. -->
+  <node pkg="elevation_mapping" type="elevation_mapping" name="elevation_mapping" output="screen">
+    <rosparam command="load" file="$(find elevation_mapping_demos)/config/robots/terrain_mapping.yaml"/>
+    <rosparam command="load" file="$(find elevation_mapping_demos)/config/postprocessing/postprocessor_pipeline.yaml"/>
+  </node>
+
+
+
+</launch>

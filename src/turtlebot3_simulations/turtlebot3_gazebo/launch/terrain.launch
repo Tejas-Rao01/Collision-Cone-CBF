@@ -1,0 +1,80 @@
+<launch>
+
+
+
+
+  <!-- -->
+  <arg name="model" default="$(env TURTLEBOT3_MODEL)" doc="model type [burger, waffle, waffle_pi]"/>
+  <arg name="x_pos" default="0.0"/>
+  <arg name="y_pos" default="0.0"/>
+  <arg name="z_pos" default="0.0"/>
+
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(find turtlebot3_gazebo)/worlds/terrain.world"/>
+    <arg name="paused" value="false"/>
+    <arg name="use_sim_time" value="true"/>
+    <arg name="gui" value="true"/>
+    <arg name="headless" value="false"/>
+    <arg name="debug" value="false"/>
+  </include>
+
+  <param name="robot_description" command="$(find xacro)/xacro --inorder $(find turtlebot3_description)/urdf/turtlebot3_$(arg model).urdf.xacro" />
+
+  <node pkg="gazebo_ros" type="spawn_model" name="spawn_urdf" args="-urdf -model turtlebot3_$(arg model) -x $(arg x_pos) -y $(arg y_pos) -z $(arg z_pos) -param robot_description" />
+  
+  
+  <include file="$(find turtlebot3_bringup)/launch/turtlebot3_remote.launch">
+    <arg name="model" value="$(arg model)"/>
+  </include>
+
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find turtlebot3_gazebo)/rviz/turtlebot3_gazebo_model.rviz"/>
+
+  <node name="update_frame_id" pkg="depth_image_proc" type="update_frame_id.py" output="screen" />
+
+  <!-- Nodelet manager for this pipeline -->
+  <node pkg="nodelet" type="nodelet" args="manager" name="standalone_nodelet" output="screen"/>
+
+  <!-- Convert to point cloud -->
+  <node pkg="nodelet" type="nodelet" name="depth_image_proc" args="load depth_image_proc/point_cloud_xyzrgb standalone_nodelet --no-bond">
+   
+        <!--remap from your specific sensors-->         
+
+        <!-- Input: Camera calibration and metadata.  (sensor_msgs/CameraInfo) -->
+        <remap from="rgb/camera_info" to="/d435/depth/camera_info"/>
+
+        <!-- Input: Rectified color image. (sensor_msgs/Image) -->
+        <remap from="rgb/image_rect_color" to="/d435/color/image_raw"/>
+
+        <!-- Input: Rectified depth image, registered to the RGB camera. (sensor_msgs/Image) -->
+        <remap from="depth_registered/image_rect" to="/d435/depth/image_raw"/>
+
+        <!-- Output: XYZ point cloud. If using PCL, subscribe as PointCloud<PointXYZ>.  (sensor_msgs/PointCloud2)  -->
+        <remap from="depth_registered/points" to="/point_cloud/points"/>
+
+    </node>
+    
+    
+	<node pkg="elevation_mapping" type="elevation_mapping" name="elevation_mapping" output="screen">
+   <rosparam command="load" file="$(find elevation_mapping_demos)/config/robots/ground_truth_demo.yaml" />
+    	 <rosparam command="load" file="$(find elevation_mapping_demos)/config/elevation_maps/long_range.yaml" />
+    	 <rosparam command="load" file="$(find elevation_mapping)/config/sensor_processors/perfect.yaml" />
+    	 <rosparam command="load" file="$(find elevation_mapping_demos)/config/postprocessing/postprocessor_pipeline.yaml" />
+    </node>
+
+
+
+  <node pkg="octomap_server" type="octomap_server_node" name="octomap_server">
+    <param name="resolution" value="0.05" />
+    
+    <!-- fixed map frame (set to 'map' if SLAM or localization running!) -->
+    <param name="frame_id" type="string" value="base_footprint" />
+    
+    <!-- maximum range to integrate (speedup!) -->
+    <param name="sensor_model/max_range" value="5.0" />
+    
+    <!-- data source to integrate (PointCloud2) -->
+    <remap from="cloud_in" to="/point_cloud/points" />
+  </node> 
+
+
+</launch>

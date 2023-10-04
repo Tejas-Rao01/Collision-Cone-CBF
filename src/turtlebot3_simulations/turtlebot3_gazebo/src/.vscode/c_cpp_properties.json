@@ -1,0 +1,48 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "${default}",
+        "limitSymbolsToIncludedHeaders": false
+      },
+      "includePath": [
+        "/home/stochlab/perception_stack/devel/include/**",
+        "/opt/ros/noetic/include/**",
+        "/home/stochlab/perception_stack/src/image_pipeline/depth_image_proc/include/**",
+        "/home/stochlab/perception_stack/src/elevation_mapping/elevation_mapping/include/**",
+        "/home/stochlab/perception_stack/src/grid_map/grid_map_core/include/**",
+        "/home/stochlab/perception_stack/src/grid_map/grid_map_costmap_2d/include/**",
+        "/home/stochlab/perception_stack/src/grid_map/grid_map_cv/include/**",
+        "/home/stochlab/perception_stack/src/grid_map/grid_map_demos/include/**",
+        "/home/stochlab/perception_stack/src/grid_map/grid_map_filters/include/**",
+        "/home/stochlab/perception_stack/src/grid_map/grid_map_loader/include/**",
+        "/home/stochlab/perception_stack/src/grid_map/grid_map_octomap/include/**",
+        "/home/stochlab/perception_stack/src/grid_map/grid_map_pcl/include/**",
+        "/home/stochlab/perception_stack/src/grid_map/grid_map_ros/include/**",
+        "/home/stochlab/perception_stack/src/grid_map/grid_map_rviz_plugin/include/**",
+        "/home/stochlab/perception_stack/src/grid_map/grid_map_sdf/include/**",
+        "/home/stochlab/perception_stack/src/grid_map/grid_map_visualization/include/**",
+        "/home/stochlab/perception_stack/src/image_pipeline/image_proc/include/**",
+        "/home/stochlab/perception_stack/src/kindr/include/**",
+        "/home/stochlab/perception_stack/src/kindr_ros/kindr_ros/include/**",
+        "/home/stochlab/perception_stack/src/kindr_ros/kindr_rviz_plugins/include/**",
+        "/home/stochlab/perception_stack/src/message_logger/include/**",
+        "/home/stochlab/perception_stack/src/kindr_ros/multi_dof_joint_trajectory_rviz_plugins/include/**",
+        "/home/stochlab/perception_stack/src/octomap_mapping/octomap_server/include/**",
+        "/home/stochlab/perception_stack/src/point_cloud_io/include/**",
+        "/home/stochlab/perception_stack/src/realsense_ros_gazebo/include/**",
+        "/home/stochlab/perception_stack/src/image_pipeline/stereo_image_proc/include/**",
+        "/home/stochlab/perception_stack/src/turtlebot3_simulations/turtlebot3_fake/include/**",
+        "/home/stochlab/perception_stack/src/turtlebot3_simulations/turtlebot3_gazebo/include/**",
+        "/home/stochlab/perception_stack/src/turtlebot3/turtlebot3_slam/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS",
+      "intelliSenseMode": "gcc-x64",
+      "compilerPath": "/usr/bin/gcc",
+      "cStandard": "gnu11",
+      "cppStandard": "c++14"
+    }
+  ],
+  "version": 4
+}
