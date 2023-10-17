@@ -68,8 +68,15 @@ class VelocityEstimator():
         self.theta = 0
 
         self.t_prev_ctrl = 0
+
+
+        
         self.controller = pid.Controller()
         self.robot_vel_x, self.robot_vel_y = 0,0
+
+
+        self.obs_x = -30
+        self.obs_y = -30
 
         print("initialised")
 

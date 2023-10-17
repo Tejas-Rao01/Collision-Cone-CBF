@@ -11,9 +11,10 @@ import matplotlib.pyplot as plt
 import cv2 
 import cv_bridge
 import sys
-sys.path.append("/home/focaslab/Downloads/Turtle-C3BF")
-sys.path.append("/home/focaslab/Downloads/Turtle-C3BF/bots")
-sys.path.append("/home/focaslab/Downloads/Turtle-C3BF/controllers")
+sys.path.append("./Turtle-C3BF")
+sys.path.append("./Turtle-C3BF/bots")
+sys.path.append("./Turtle-C3BF/controllers")
+
 
 from bots.AC_unicycle import Unicycle
 from controllers.QP_controller_unicycle import QP_Controller_Unicycle
@@ -26,20 +27,22 @@ from tf2_msgs.msg import TFMessage
 class Controller():
 
     def __init__(self) -> None:
+        
 
-        # self.pose_sub = rospy.Subscriber('/tb3_0/odom', Odometry, self.odom_callback)
-        # self.control_pub = rospy.Publisher('/tb3_0/cmd_vel', Twist, queue_size=1)
-        self.obstacle_pub = rospy.Publisher('/tb3_5/cmd_vel', Twist, queue_size =1)
+        print("blah 6")
+        self.pose_sub = rospy.Subscriber('/tb3_0/odom', Odometry, self.odom_callback)
+        self.control_pub = rospy.Publisher('/tb3_0/cmd_vel', Twist, queue_size=1)
+        self.obstacle_pub = rospy.Publisher('/tb3_3/cmd_vel', Twist, queue_size =1)
         # self.obs_sub = rospy.Subscriber('/tb3_1/odom', Odometry, self.obstacle_sub)
-        self.pose_sub = rospy.Subscriber('/odom', Odometry, self.odom_callback)
-        self.control_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
+        # self.pose_sub = rospy.Subscriber('/odom', Odometry, self.odom_callback)
+        # self.control_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
 
         self.x = 0
         self.y = 0
         self.theta = 0 
         self.theta_list = []
 
-
+        print("blah 7")
         self.goalx, self.goaly = 0, 0
         self.curr_goal = 1  
         self.goal_thresh = 0.2
@@ -81,7 +84,7 @@ class Controller():
         self.relx_est, self.rely_est, self.vrelx_est, self.vrely_est = 0,0,0,0
         self.v_obsx = -0.00
         self.v_obsy = 0 
-        self.qp = QP_Controller_Unicycle(100, obs_radius= 0.3)
+        self.qp = QP_Controller_Unicycle(1, obs_radius= 0.3)
         self.t_prev = rospy.get_time()
         self.t_prev_odom = None 
         self.v_des = 0.11
@@ -91,16 +94,13 @@ class Controller():
         self.w_target_old = 0
         self.return_to_origin = False
 
-        self.targetVelocity1 = 2.5
-        self.targetVelocity2 = 2.5
-
-        bot1_config_file_path = '/home/focaslab/Documents/Turtle-C3BF/bots/bot_config/bot1.json'
+        bot1_config_file_path = './Turtle-C3BF/bots/bot_config/bot1.json'
         self.bot = Unicycle.from_JSON(bot1_config_file_path)
 
 
         self.reset_files()
         
-        self.dt_odom = 0.1
+        self.dt_odom = 0.05
 
 
         #Internal variables to store the obstacle pos
@@ -113,34 +113,35 @@ class Controller():
 
 
     def reset_files(self):
-        with open("/home/focaslab/Downloads/run_no.txt", "r") as f:
+        with open("./run_no.txt", "r") as f:
             l = f.readline()
             self.no = int(l)
-        open("/home/focaslab/Downloads/run_no.txt", "w").close()
+        open("./run_no.txt", "w").close()
         # self.no = 0
-        with open("/home/focaslab/Downloads/run_no.txt", "w") as f:
+        with open("./run_no.txt", "w") as f:
             f.write(str(self.no + 1))
         
-        self.file = f"/home/focaslab/Documents/log{self.no}.txt"
+        self.file = f"./runs/log{self.no}.txt"
         # open(self.file, "w").close()
-        self.file_path = f"/home/focaslab/Documents/obstaclepos{self.no}.txt"
+        self.file_path = f"./runs/obstaclepos{self.no}.txt"
         # open(self.file_path, "w").close()
 
-        self.file_path2 = f"/home/focaslab/Documents/obstaclevel{self.no}.txt"
-        # open(self.file_path2, "w").close()
+        self.file_path2 = f"./runs/obstaclevel{self.no}.txt"
+        # open(self.file_path2, "w").close(
         
-        self.file_path3 = f"/home/focaslab/Documents/robotpos{self.no}.txt"
+        self.file_path3 = f"./runs/robotpos{self.no}.txt"
         # open(self.file_path3, "w").close()
-        self.file_path4 = f"/home/focaslab/Documents/gt{self.no}.txt"
+        self.file_path4 = f"./runs/gt{self.no}.txt"
+
+        self.file_path5 = f"./runs/cbf{self.no}.txt"
 
 
     def pid(self):
 
         t_curr = rospy.get_time()
         self.dt = t_curr - self.t_prev 
-        if self.dt == 0:
-            self.dt += 0.2
-        # print("dt:",self.dt)
+        
+        print("dt:",self.dt)
         self.t_prev = t_curr 
 
         # if self.x > 3.2:
@@ -203,6 +204,7 @@ class Controller():
         # print("A, ALPHA", a , alpha)
         # print("v", self.v)
         u_ref = np.array([a, alpha])
+        a , alpha = np.array([a]), np.array([alpha])
         active = 0
         detection = 0
         value_of_h = 0
@@ -247,7 +249,7 @@ class Controller():
             print(f"bot theta: {self.bot.theta  } bot w: {self.bot.w}")
             print("reference ", u_ref)
             print("cbf", u_star)
-
+            print("params", self.bot.x, ",",self.bot.y,",", self.bot.theta, ",",self.bot.v, ",", self.bot.w)
             print("--------------------------")
             print("  ")
         else:
@@ -271,42 +273,22 @@ class Controller():
             f.write(s)
             f.close()
 
-
-        prev_targetVelocity1 = self.targetVelocity1
-        self.targetVelocity1 = prev_targetVelocity1 + (a -alpha*0.075) / 0.033* self.dt #
-        
-        prev_targetVelocity2 = self.targetVelocity2
-        self.targetVelocity2 = prev_targetVelocity2 + (a + alpha*0.075)/ 0.033 * self.dt
-
         self.internal_obs_x = .00 * self.dt +self.internal_obs_x
         self.internal_obs_velx = 0.00
         self.internal_obs_vely = 0
-
         
         self.v_target_old =  self.v_target_old + a * self.dt #(self.targetVelocity1 + self.targetVelocity2)* 0.033 / 2 
         self.w_target_old =  self.w_target_old + alpha * self.dt #(self.targetVelocity2 - self.targetVelocity1) * 0.033 / 0.15
 
-        print("old")
-        print(self.v_target_old, self.w_target_old)
-
-        self.v_target = (self.targetVelocity1 + self.targetVelocity2)* 0.033 / 2 
-        self.w_target = (self.targetVelocity2 - self.targetVelocity1) * 0.033 / 0.15
+        # self.v_target_old = max(-0.15, min(0.15, self.v_target_old))
+        # self.w_target_old = max(-1.5, min(1.5, self.w_target_old))
 
 
-        print("new")
-        print(self.v_target, self.w_target)
-
-
-        self.targetVelocity1 = min(5, max(-5, self.targetVelocity1))
-        self.targetVelocity2 = min(5, max(-5, self.targetVelocity2))
-
-
-        self.v_target_old = min(-0.15, max(0.15, self.v_target))
-        self.w_target_old = min(-1.5, max(1.5, self.w_target))
-
+        self.v_target = self.v_target_old
+        self.w_target = self.w_target_old
         cmd_vel = Twist()
-        cmd_vel.linear.x = max(-0.15, min(0.15    , self.v_target))
-        cmd_vel.angular.z= max(-2, min(2, self.w_target))
+        cmd_vel.linear.x =  self.v_target
+        cmd_vel.angular.z= self.w_target
         self.control_pub.publish(cmd_vel)
 
 
@@ -317,8 +299,23 @@ class Controller():
 
         t2 = time.time()
         print("inference time", t2-t)
+        if type(self.v_target) == float:
+            self.v_target = np.array([self.v_target])
+        
+        if type(self.w_target) == float:
+            self.w_target = np.array([self.w_target])
+        
+        
         with open(self.file, "a") as f:
-            l = [self.x, self.y, value_of_h, t, active, detection]
+            l = [self.x, self.y, value_of_h, t, active, detection, self.v_target[0], self.w_target[0]]
+            s = " ".join(str(i) for i in l)
+            s += '\n'
+            f.write(s)
+            f.close()
+
+
+        with open(self.file_path5, "a") as f:
+            l = [self.bot.x, self.bot.y, self.bot.theta, self.bot.v, self.bot.w, t, value_of_h, active, u_ref[0], u_ref[1], u_star[0][0], u_star[1][0], self.v_target[0], self.w_target[0]]
             s = " ".join(str(i) for i in l)
             s += '\n'
             f.write(s)
@@ -377,7 +374,7 @@ class Controller():
         self.vy_self = (y - self.y)/ dt 
         self.w = data.twist.twist.angular.z
         self.theta_list.append(theta)
-        self.theta_list[-1] = np.unwrap(self.theta_list)[-1]
+        self.theta_list = np.unwrap(self.theta_list).tolist()
         if len(self.theta_list) > 5:
             self.theta_list.pop(0)
 
@@ -394,11 +391,11 @@ class Controller():
     def run(self):
         rate = rospy.Rate(20)
         tick = 0
-        x = 1
+        x = 2
         v = 0.00
         t0 = time.time()
         while not rospy.is_shutdown():
-            self.publish(x,0.2,-v,0)
+            self.publish(x,0.0,-v,0)
             t = time.time()
             dt = t - t0 
             t0 = t 
@@ -415,8 +412,8 @@ class Controller():
             if tick == 10:
                 tick = 0
 if __name__ == "__main__":
-    
     rospy.init_node("pid")
+    print("blah 8")
     pid = Controller()
 
     pid.run()

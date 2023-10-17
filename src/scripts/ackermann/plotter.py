@@ -29,7 +29,7 @@ plt.scatter(Time, H, c=col )
 # plt.plot(Time, H)
 plt.ylim(-2.5, 2.5)
 plt.legend(['cbf active', 'cbf inactive'])
-# plt.legend(['outside perception boundary', 'cbf active', 'cbf inactive'])
+# plt.legend(['outside perception boundar   y', 'cbf active', 'cbf inactive'])
 # plt.legend()
 
 plt.show()
