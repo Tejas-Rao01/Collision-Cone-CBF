@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+    #!/usr/bin/env python3
 
 import rospy
 from geometry_msgs.msg import Twist
@@ -14,7 +14,6 @@ from cv_bridge import CvBridge, CvBridgeError
 import message_filters
 from gazebo_msgs.msg import ModelStates
 import sys 
-sys.path.append("/home/stochlab/Documents")
 import pid
 import pandas as pd
 
@@ -39,19 +38,14 @@ class VelocityEstimator():
         self.rgb1 = None
         self.bridge = CvBridge()
 
-        # File Paths for storing data
-        self.file_path = "/home/rao/perception_stack/src/turtlebot3_simulations/turtlebot3_gazebo/src/data.txt"
-        self.gt_path = "/home/rao/perception_stack/src/turtlebot3_simulations/turtlebot3_gazebo/src/gt.txt"
-        open(self.file_path, 'w').close()
-        open(self.gt_path, "w").close()
-
 
         # Parameters for vel estimation 
         self.num_samples_optical_flow = 3000 
         self.image_height = 480
         self.image_width = 640
         # self.fx = 462.1379699707031
-        self.fx = 913.2835693359375
+        self.fx = 608.855712890625
+        # self.fx = 913.2835693359375
 
         # Init the values for computing velocity 
         self.obs_x_prev = 0 
@@ -69,21 +63,19 @@ class VelocityEstimator():
 
         self.t_prev_ctrl = 0
 
-
-        
         self.controller = pid.Controller()
         self.robot_vel_x, self.robot_vel_y = 0,0
 
 
-        self.obs_x = -30
-        self.obs_y = -30
+        self.obs_x = None
+        self.obs_y = None 
 
         print("initialised")
 
 
     def load_model(self):
-        weights_path = "/home/rao/torch_models/yolov5/best2.pt"
-        model_path = "/home/rao/torch_models/yolov5"
+        weights_path = "/home/focaslab/torch_models/yolov5/best.pt"
+        model_path = "/home/focaslab/torch_models/yolov5"
         self.model = torch.hub.load(model_path, 'custom', path=weights_path, source='local', force_reload=True)
 
         # Used to store the model
@@ -102,7 +94,7 @@ class VelocityEstimator():
 
         rgb_time= rgb.header.stamp.secs + rgb.header.stamp.nsecs / 10**9
         # depth_time = depth.header.stamp.secs + depth.header.stamp.nsecs / 10**9
-
+    
         # Obtain rgb image 
         try:
             # Convert your ROS Image message to OpenCV2
@@ -113,7 +105,7 @@ class VelocityEstimator():
             pass    
         
 
-        cv.imwrite("/home/rao/img.png", rgb_img)
+        cv.imwrite("/home/focaslab/img.png", rgb_img)
         self.rgb1 = rgb_img
         if self.depth_flag:
             self.compute_pos_and_vel((rgb_time), x, y , theta)
@@ -133,7 +125,7 @@ class VelocityEstimator():
             pass
         
         self.depth1 = depth_img 
-        np.save("/home/rao/depth.npy", depth_img)
+        np.save("/home/focaslab/depth.npy", depth_img)
 
 
 
@@ -239,15 +231,13 @@ class VelocityEstimator():
             # print(f"absx absy: {self.obs_x} {self.obs_y}")
             # print("------------------")
             
-
-
             self.obs_x_prev = self.obs_x 
             self.obs_y_prev = self.obs_y
             self.t_prev = t
         
         else:
-            self.obs_x = -30 
-            self.obs_y = -30
+            self.obs_x = None 
+            self.obs_y = None
             self.obs_x_prev = None 
             self.obs_y_prev = None 
             self.obs_v_x = 0 
@@ -346,9 +336,10 @@ if __name__ == "__main__":
     rate = rospy.Rate(10)
     tick = 0
     
+    controller.run()
     while not rospy.is_shutdown():
         obs_x, obs_y, obs_v_x, obs_v_y = vel_estimator.get_obs_params()
-        controller.publish(obs_x, obs_y, obs_v_x, obs_v_y, tick)
+        controller.set_obs_pos_and_vel(obs_x, obs_y + 0.1, obs_v_x, obs_v_y)
 
         tick += 1 
         if tick == 10:

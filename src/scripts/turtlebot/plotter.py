@@ -11,10 +11,10 @@ T, X, Y = [], [], []
 
 
 
-no = 148
+no = 588
 robotX, robotY, H, Time, Act, Det = [],[],[],[],[],[]
 Acc, Alpha = [], []
-with open(f"./runs/log{no}.txt", "r") as f:
+with open(f"./final_runs/log{no}.txt", "r") as f:
     lines = f.readlines()
 
     for line in lines:
@@ -34,13 +34,17 @@ robotX, robotY, H, Time, Act, Det = np.array(robotX), np.array(robotY), np.array
 col = np.where(Det==0, 'y', np.where(Act == 1, 'r', 'b'))
 plt.scatter(Time[0],-10, c='y')
 plt.scatter(Time[0],10,c='r')
+plt.scatter(Time[0],10,c='b')
+
 # lab = np.where(Det==0, 'outside perception boundary', np.where(Act == 1, 'cbf active', 'cbf inactive'))
 plt.scatter(Time, H, c=col )
 # plt.plot(Time, H)
-plt.ylim(-2.5, 2.5)
-plt.legend(['outside perception boundary', 'cbf active', 'cbf inactive'])
+plt.ylim(-1, 1)
+plt.legend(['obstacle outside perception boundary', 'cbf active', 'cbf inactive'])
 # plt.legend()
-
+plt.xlabel("Time (s)")
+plt.ylabel("H")
+plt.title("Value of H vs Time")
 plt.show()
 
 plt.subplot(2,1,1)
@@ -55,7 +59,7 @@ plt.ylim(-0.5,0.5)
 plt.title("w vs Time")
 plt.show()
 
-with open(f"./runs/obstaclepos{no}.txt", "r") as f:
+with open(f"./final_runs/obstaclepos{no}.txt", "r") as f:
     lines = f.readlines()
     for line in lines:
         if line.find("None") != -1:
@@ -73,7 +77,7 @@ with open(f"./runs/obstaclepos{no}.txt", "r") as f:
 
 Tvel, Xvel, Yvel = [], [], []
 Xvel_gt, Yvel_gt, X_gt, Y_gt = [],[],[],[]
-with open(f"./runs/obstaclevel{no}.txt", "r") as f:
+with open(f"./final_runs/obstaclevel{no}.txt", "r") as f:
     lines = f.readlines()
     for line in lines:
         if line.find("None") != -1:
@@ -96,7 +100,7 @@ with open(f"./runs/obstaclevel{no}.txt", "r") as f:
 # plt.show()
 
 robotx, roboty, active = [], [], []
-with open(f"./runs/gt{no}.txt", "r") as f:
+with open(f"./final_runs/gt{no}.txt", "r") as f:
     lines = f.readlines()
     for line in lines:
         _, x,y,vx,vy = list(map(float, line.split()))
@@ -105,7 +109,7 @@ with open(f"./runs/gt{no}.txt", "r") as f:
         Xvel_gt.append(vx)
         Yvel_gt.append(vy)
 
-with open(f"./runs/robotpos{no}.txt", "r") as f:
+with open(f"./final_runs/robotpos{no}.txt", "r") as f:
     lines = f.readlines()
     for line in lines:
         if line.find("None") != -1:
@@ -128,7 +132,8 @@ active = np.array(active)
 
 plt.scatter(2,2,c='r')
 col = np.where(active==1, 'r', 'b')
-plt.scatter(robotx, -roboty, c=col)
+col = np.where(Det==0, 'y', np.where(Act == 1, 'r', 'b'))
+plt.scatter(robotx, roboty, c=col)
 plt.scatter(2,0,c='g', s=150)
 plt.title("robotx vs roboty")
 plt.legend(['cbf active', 'cbf inactive', 'obstacle'])
@@ -136,6 +141,7 @@ plt.ylim(-1.5,1.5)
 plt.show()
 
 plt.subplot(2,2,1)
+plt.plot(T, robotx, c ='g')
 plt.plot(T, X, c='b')
 plt.plot(T, X_gt, c='b')
 

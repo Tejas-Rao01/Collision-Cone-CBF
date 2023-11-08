@@ -63,8 +63,8 @@ class Controller():
 
         self.t0 = time.time()
 
-        self.Kp2 = 0.5
-        self.Kd2 = 0.5
+        self.Kp2 = 1
+        self.Kd2 = 0.4
         self.Ki2 = 0
 
         self.v = 0
@@ -77,17 +77,17 @@ class Controller():
 
         self.obs_x = -30 
         self.obs_y = -30
-        self.obs_v_x = 0 
+        self.obs_v_x = -0.05 
         self.obs_v_y = 0
         self.abs_x, self.abs_y, self.abs_theta = None, None, 0
 
         self.relx_est, self.rely_est, self.vrelx_est, self.vrely_est = 0,0,0,0
         self.v_obsx = -0.00
         self.v_obsy = 0 
-        self.qp = QP_Controller_Unicycle(1, obs_radius= 0.3)
+        self.qp = QP_Controller_Unicycle(1, obs_radius= 0.25)
         self.t_prev = rospy.get_time()
         self.t_prev_odom = None 
-        self.v_des = 0.11
+        self.v_des = 0.1
         self.v_target = 0.15
         self.w_target = 0
         self.v_target_old = 0.15
@@ -104,9 +104,9 @@ class Controller():
 
 
         #Internal variables to store the obstacle pos
-        self.internal_obs_x = 2
+        self.internal_obs_x = 3.5
         self.internal_obs_y = 0.1
-        self.internal_obs_velx = 0
+        self.internal_obs_velx = -0.04
         self.internal_obs_vely = 0 
         # self.obs_offsetx, self.obs_offsety = 2.5, 0
 
@@ -195,6 +195,9 @@ class Controller():
             f.write(s)
             f.close()
 
+
+        if self.x < 0:
+            obs_x, obs_y = None, None
         self.abs_x = obs_x 
         self.abs_y = obs_y
         self.obs_v_x = obs_v_x
@@ -237,28 +240,29 @@ class Controller():
                     print("CBF ACTIVE!!!")
 
 
-            print("curr x and y ", self.x, self.y)
-            # print("rel ", self.obs_x, self.rely)  
-            # Simulation
-            # Solve QP
-
-            print(f"current velocity: {self.v} angular: {self.w}")
-            # Printing bot params 
-            print("cbf inputs ", [self.abs_x, self.abs_y], [self.obs_v_x, self.obs_v_y])
-            print(f"botx : {self.bot.x} boty: {self.bot.y}, bot v: {self.bot.v}")
-            print(f"bot theta: {self.bot.theta  } bot w: {self.bot.w}")
-            print("reference ", u_ref)
-            print("cbf", u_star)
-            print("params", self.bot.x, ",",self.bot.y,",", self.bot.theta, ",",self.bot.v, ",", self.bot.w)
-            print("--------------------------")
-            print("  ")
+            
         else:
             self.qp.set_reference_control(u_ref)
             self.qp.setup_QP(self.bot, [self.internal_obs_x, self.internal_obs_y], [self.internal_obs_velx, self.internal_obs_vely]) #            
             value_of_h   = self.qp.solve_QP(self.bot)
-            print("value of h", value_of_h)
+            # print("value of h", value_of_h)
+            u_star = u_ref
 
+        print("curr x and y ", self.x, self.y)
+            # print("rel ", self.obs_x, self.rely)  
+            # Simulation
+            # Solve QP
 
+        print(f"current velocity: {self.v} angular: {self.w}")
+        # Printing bot params 
+        print("cbf inputs ", [self.abs_x, self.abs_y], [self.obs_v_x, self.obs_v_y])
+        print(f"botx : {self.bot.x} boty: {self.bot.y}, bot v: {self.bot.v}")
+        print(f"bot theta: {self.bot.theta  } bot w: {self.bot.w}")
+        print("reference ", u_ref)
+        print("cbf", u_star)
+        print("params", self.bot.x, ",",self.bot.y,",", self.bot.theta, ",",self.bot.v, ",", self.bot.w)
+        print("--------------------------")
+        print("  ")
 
         self.bot.update_state(np.array([self.x, self.y]), self.theta, self.v, self.w,self.dt )
         with open(self.file_path3, 'a') as f:
@@ -273,7 +277,7 @@ class Controller():
             f.write(s)
             f.close()
 
-        self.internal_obs_x = .00 * self.dt +self.internal_obs_x
+        self.internal_obs_x = self.internal_obs_velx * self.dt +self.internal_obs_x
         self.internal_obs_velx = 0.00
         self.internal_obs_vely = 0
         
@@ -298,7 +302,7 @@ class Controller():
 
 
         t2 = time.time()
-        print("inference time", t2-t)
+        # print("inference time", t2-t)
         if type(self.v_target) == float:
             self.v_target = np.array([self.v_target])
         
@@ -306,20 +310,20 @@ class Controller():
             self.w_target = np.array([self.w_target])
         
         
-        with open(self.file, "a") as f:
-            l = [self.x, self.y, value_of_h, t, active, detection, self.v_target[0], self.w_target[0]]
-            s = " ".join(str(i) for i in l)
-            s += '\n'
-            f.write(s)
-            f.close()
+        # with open(self.file, "a") as f:
+        #     l = [self.x, self.y, value_of_h, t, active, detection, self.v_target[0], self.w_target[0]]
+        #     s = " ".join(str(i) for i in l)
+        #     s += '\n'
+        #     f.write(s)
+        #     f.close()
 
 
-        with open(self.file_path5, "a") as f:
-            l = [self.bot.x, self.bot.y, self.bot.theta, self.bot.v, self.bot.w, t, value_of_h, active, u_ref[0], u_ref[1], u_star[0][0], u_star[1][0], self.v_target[0], self.w_target[0]]
-            s = " ".join(str(i) for i in l)
-            s += '\n'
-            f.write(s)
-            f.close()
+        # with open(self.file_path5, "a") as f:
+        #     l = [self.bot.x, self.bot.y, self.bot.theta, self.bot.v, self.bot.w, t, value_of_h, active, u_ref[0], u_ref[1], u_star[0][0], u_star[1][0], self.v_target[0], self.w_target[0]]
+        #     s = " ".join(str(i) for i in l)
+        #     s += '\n'
+        #     f.write(s)
+        #     f.close()
 
 
     def obstacle_sub(self, data):
@@ -391,11 +395,11 @@ class Controller():
     def run(self):
         rate = rospy.Rate(20)
         tick = 0
-        x = 2
-        v = 0.00
+        x = .7
+        v = 0.04
         t0 = time.time()
         while not rospy.is_shutdown():
-            self.publish(x,0.0,-v,0)
+            self.publish(2,x,0, -v)
             t = time.time()
             dt = t - t0 
             t0 = t 
