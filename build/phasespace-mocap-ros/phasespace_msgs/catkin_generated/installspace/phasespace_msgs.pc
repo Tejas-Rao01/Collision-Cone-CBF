@@ -1,0 +1,8 @@
+prefix=/home/rao/Collision-Cone-CBF/install
+
+Name: phasespace_msgs
+Description: Description of phasespace_msgs
+Version: 0.0.0
+Cflags: -I${prefix}/include
+Libs: -L${prefix}/lib 
+Requires: std_msgs message_runtime

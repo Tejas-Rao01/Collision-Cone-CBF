@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
-import rospy
+import rospy 
+from typing import Tuple
+
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import Image
@@ -32,8 +34,8 @@ class Controller():
         print("blah 6")
         self.pose_sub = rospy.Subscriber('/tb3_0/odom', Odometry, self.odom_callback)
         self.control_pub = rospy.Publisher('/tb3_0/cmd_vel', Twist, queue_size=1)
-        self.obstacle_pub = rospy.Publisher('/tb3_3/cmd_vel', Twist, queue_size =1)
-        # self.obs_sub = rospy.Subscriber('/tb3_1/odom', Odometry, self.obstacle_sub)
+        # self.obs_pub = rospy.Publisher('/tb3_1/cmd_vel', Twist, queue_size =1)
+        self.obs_sub = rospy.Subscriber('/tb3_1/odom', Odometry, self.obstacle_sub)
         # self.pose_sub = rospy.Subscriber('/odom', Odometry, self.odom_callback)
         # self.control_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=1)
 
@@ -49,7 +51,7 @@ class Controller():
 
         #PID params
 
-        self.Kp1 = 0.08
+        self.Kp1 = 0.4
         self.Kd1 = 0.3 
         self.Ki1 = 0.0
         
@@ -63,7 +65,7 @@ class Controller():
 
         self.t0 = time.time()
 
-        self.Kp2 = 1
+        self.Kp2 = 2.5
         self.Kd2 = 0.4
         self.Ki2 = 0
 
@@ -71,9 +73,11 @@ class Controller():
         self.w = 0
         self.prev_heading_error =0  
         self.prev_vel_error = 0
+        self.prev_heading_error_obs =0  
+        self.prev_vel_error_obs = 0
 
         self.vx_self = 0 
-        self.vy_self = 0 
+        self.vy_self = 0
 
         self.obs_x = -30 
         self.obs_y = -30
@@ -87,11 +91,20 @@ class Controller():
         self.qp = QP_Controller_Unicycle(1, obs_radius= 0.25)
         self.t_prev = rospy.get_time()
         self.t_prev_odom = None 
-        self.v_des = 0.1
+        self.v_des = 0.15
         self.v_target = 0.15
         self.w_target = 0
         self.v_target_old = 0.15
         self.w_target_old = 0
+
+        self.obs_v = 0
+
+        self.v_target_obs = 0.08 
+        self.w_target_obs=  0
+
+        self.theta_list_obs = []
+
+
         self.return_to_origin = False
 
         bot1_config_file_path = './Turtle-C3BF/bots/bot_config/bot1.json'
@@ -121,141 +134,90 @@ class Controller():
         with open("./run_no.txt", "w") as f:
             f.write(str(self.no + 1))
         
-        self.file = f"./runs/log{self.no}.txt"
-        # open(self.file, "w").close()
-        self.file_path = f"./runs/obstaclepos{self.no}.txt"
-        # open(self.file_path, "w").close()
-
-        self.file_path2 = f"./runs/obstaclevel{self.no}.txt"
-        # open(self.file_path2, "w").close(
-        
-        self.file_path3 = f"./runs/robotpos{self.no}.txt"
-        # open(self.file_path3, "w").close()
-        self.file_path4 = f"./runs/gt{self.no}.txt"
-
         self.file_path5 = f"./runs/cbf{self.no}.txt"
 
 
-    def pid(self):
+    def pid(self) -> Tuple[float, float]:
+        """
+        Computes the alpha and a values using PID control.
 
-        t_curr = rospy.get_time()
-        self.dt = t_curr - self.t_prev 
-        
-        print("dt:",self.dt)
-        self.t_prev = t_curr 
+        Returns:
+            Tuple[float, float]: The computed alpha and a values.
+        """
+        self.dt = rospy.get_time() - self.t_prev 
+        self.t_prev = rospy.get_time()
 
-        # if self.x > 3.2:
-        #     self.goaly = 0.2
-
-        delta_theta = (np.arctan2((self.goaly - self.y), 0.9)) - self.theta
-        # delta_theta = ((delta_theta + np.pi)%(2.0*np.pi)) - np.pi
-        # print("delta theta", delta_theta)
-        # delta_theta = np.pi/2 - self.thet.a
-
-        #Error is delta_theta in degrees
+        delta_theta = np.arctan2(self.goaly - self.y, 0.9) - self.theta
         e_new = delta_theta
-        
-        e_dot = (e_new - self.prev_heading_error)/self.dt 
-        # print("enew", e_new)1
-        # print("slef. theta", 11self.theta)
-        # print("edot", e_dot)
-        # print("etheta, edottheta"?, e_new, e_dot)
-        alpha = (self.Kp1*e_new) + (self.Kd1*e_dot)
-        self.prev_heading_error = e_new 
-        
-        # self.v = np.sqrt(self.vx_self **2 + self.vy_self ** 2 )
+        e_dot = (e_new - self.prev_heading_error) / self.dt
+        alpha = self.Kp1 * e_new + self.Kd1 * e_dot
+        self.prev_heading_error = e_new
 
-        # print("selfvxvy", self.vx_self, self.vy_self)
-        e_v = (self.v_des- self.v ) 
-        # print("e_v", e_v)
-        # print("self.v", self.v)
+        e_v = self.v_des - self.v
         e_vdot = (e_v - self.prev_vel_error) / self.dt
-        self.prev_vel_error = e_v 
-        # print(e_v, e_vdot)
-        # print("e-v * kp", self.Kp2 * e_v)
-        a = self.Kp2 * e_v  + self.Kd2 * (e_vdot) 
-        # print("a, alpha", a, alpha) 
-    
+        self.prev_vel_error = e_v
+        a = self.Kp2 * e_v + self.Kd2 * e_vdot
+
         return a, alpha
+        
+
+	
+    def pid_obs(self, obs_y: float, obs_theta: float, obs_v: float) -> Tuple[float, float]:
+        """
+        Computes the alpha and a values for the obstacle using PID control.
+
+        Args:
+            obs_y (float): The y-coordinate of the obstacle.
+            obs_theta (float): The angular orientation of the obstacle.
+            obs_v (float): The velocity of the obstacle.
+
+        Returns:
+            Tuple[float, float]: A tuple containing the computed alpha and a values.
+        """
+        desired_heading = -(np.arctan2(obs_y - 0.1, 0.9))
+        delta_theta = (desired_heading - obs_theta + np.pi) % (2 * np.pi) - np.pi
+
+        e_new = delta_theta
+        e_dot = (e_new - self.prev_heading_error_obs) / self.dt
+        alpha = self.Kp1 * e_new + self.Kd1 * e_dot
+        self.prev_heading_error_obs = e_new
+
+        e_v = 0.08 - obs_v
+        e_vdot = (e_v - self.prev_vel_error_obs) / self.dt
+        self.prev_vel_error_obs = e_v
+        a = self.Kp2 * e_v + self.Kd2 * e_vdot
+
+   
+
 
 
     def publish(self, obs_x, obs_y, obs_v_x, obs_v_y):
         t = time.time()
-
-    
-        with open(self.file_path, 'a') as f:
-            s = " ".join(str(i) for i in [t,obs_x, obs_y])
-            s += '\n'
-            f.write(s)
-            f.close()
-
-        with open(self.file_path2, 'a') as f:
-            s = " ".join(str(i) for i in [t, obs_v_x, obs_v_y])
-            s += '\n'
-            f.write(s)
-            f.close()
-
-
-        if self.x < 0:
-            obs_x, obs_y = None, None
-        self.abs_x = obs_x 
-        self.abs_y = obs_y
-        self.obs_v_x = obs_v_x
-        self.obs_v_y = obs_v_y 
         a, alpha = self.pid()
         
-        # print("A, ALPHA", a , alpha)
-        # print("v", self.v)
         u_ref = np.array([a, alpha])
         a , alpha = np.array([a]), np.array([alpha])
         active = 0
-        detection = 0
-        value_of_h = 0
-        if self.abs_x != None  and self.abs_y != None :
-            detection = 1
-            # print(" ..................................")
-            # print()
-            # print()
-            # print()
-            # print("detection")
-            # print("x and y", self.abs_x, self.abs_y)
-            self.qp.set_reference_control(u_ref)
-            # print("setting up qp: xy vxvy",  [self.abs_x, self.abs_y], [self.obs_v_x, self.obs_v_y])
-            self.qp.setup_QP(self.bot, [self.abs_x, self.abs_y], [self.obs_v_x, self.obs_v_y]) #  
+        value_of_h = 0        
+        self.qp.set_reference_control(u_ref)
+        self.qp.setup_QP(self.bot) #  
+        
+        
+        value_of_h  = self.qp.solve_QP(self.bot,  [self.obs_x, self.obs_y], [self.obs_v_x, self.obs_v_y])
+        # # Bot Kinematics
+        u_star = self.qp.get_optimal_control() 
             
-            
-            # print("vrel ", self.vobs_x, self.vrely)
-            value_of_h  = self.qp.solve_QP(self.bot)
-            # print("value of h", value_of_h)
-            # # Bot Kinematics
-            u_star = self.qp.get_optimal_control() 
-            if t - self.t0 > 0:
-                
-                a, alpha = u_star
+        a, alpha = u_star
 
-                if u_star[0] != u_ref[0] or u_star[1] != u_ref[1]:
-                    active = 1
-                    print("   ")
-                    print("--------------------------------------")
-                    print("CBF ACTIVE!!!")
-
-
-            
-        else:
-            self.qp.set_reference_control(u_ref)
-            self.qp.setup_QP(self.bot, [self.internal_obs_x, self.internal_obs_y], [self.internal_obs_velx, self.internal_obs_vely]) #            
-            value_of_h   = self.qp.solve_QP(self.bot)
-            # print("value of h", value_of_h)
-            u_star = u_ref
-
+        if u_star[0] != u_ref[0] or u_star[1] != u_ref[1]:
+            active = 1
+            print("   ")
+            print("--------------------------------------")
+            print("CBF ACTIVE!!!")
         print("curr x and y ", self.x, self.y)
-            # print("rel ", self.obs_x, self.rely)  
-            # Simulation
-            # Solve QP
-
         print(f"current velocity: {self.v} angular: {self.w}")
         # Printing bot params 
-        print("cbf inputs ", [self.abs_x, self.abs_y], [self.obs_v_x, self.obs_v_y])
+        print("cbf inputs ", [self.obs_x, self.obs_y], [self.obs_v_x, self.obs_v_y])
         print(f"botx : {self.bot.x} boty: {self.bot.y}, bot v: {self.bot.v}")
         print(f"bot theta: {self.bot.theta  } bot w: {self.bot.w}")
         print("reference ", u_ref)
@@ -265,69 +227,41 @@ class Controller():
         print("  ")
 
         self.bot.update_state(np.array([self.x, self.y]), self.theta, self.v, self.w,self.dt )
-        with open(self.file_path3, 'a') as f:
-            s = " ".join(str(i) for i in [t, self.x, self.y, active])
-            s += '\n'
-            f.write(s)
-            f.close()
-        
-        with open(self.file_path4, 'a') as f:
-            s = " ".join(str(i) for i in [t, self.internal_obs_x, self.internal_obs_y, self.internal_obs_velx, self.internal_obs_vely])
-            s += '\n'
-            f.write(s)
-            f.close()
-
-        self.internal_obs_x = self.internal_obs_velx * self.dt +self.internal_obs_x
-        self.internal_obs_velx = 0.00
-        self.internal_obs_vely = 0
         
         self.v_target_old =  self.v_target_old + a * self.dt #(self.targetVelocity1 + self.targetVelocity2)* 0.033 / 2 
         self.w_target_old =  self.w_target_old + alpha * self.dt #(self.targetVelocity2 - self.targetVelocity1) * 0.033 / 0.15
 
-        # self.v_target_old = max(-0.15, min(0.15, self.v_target_old))
-        # self.w_target_old = max(-1.5, min(1.5, self.w_target_old))
-
 
         self.v_target = self.v_target_old
         self.w_target = self.w_target_old
+        
+        self.v_target = min(0.15, max(-0.15, self.v_target))
+        self.w_target = min(1.5, max(-1.5, self.w_target))
+        
         cmd_vel = Twist()
         cmd_vel.linear.x =  self.v_target
         cmd_vel.angular.z= self.w_target
         self.control_pub.publish(cmd_vel)
 
 
-        cmd_vel.linear.x = -0.04
-        cmd_vel.angular.z = -0.0
-        self.obstacle_pub.publish(cmd_vel)
-
-
-        t2 = time.time()
-        # print("inference time", t2-t)
         if type(self.v_target) == float:
             self.v_target = np.array([self.v_target])
         
         if type(self.w_target) == float:
             self.w_target = np.array([self.w_target])
-        
-        
-        # with open(self.file, "a") as f:
-        #     l = [self.x, self.y, value_of_h, t, active, detection, self.v_target[0], self.w_target[0]]
-        #     s = " ".join(str(i) for i in l)
-        #     s += '\n'
-        #     f.write(s)
-        #     f.close()
 
-
-        # with open(self.file_path5, "a") as f:
-        #     l = [self.bot.x, self.bot.y, self.bot.theta, self.bot.v, self.bot.w, t, value_of_h, active, u_ref[0], u_ref[1], u_star[0][0], u_star[1][0], self.v_target[0], self.w_target[0]]
-        #     s = " ".join(str(i) for i in l)
-        #     s += '\n'
-        #     f.write(s)
-        #     f.close()
+        with open(self.file_path5, "a") as f:
+            l = [t, self.bot.x, self.bot.y, self.bot.theta, self.bot.v, self.bot.w, u_ref[0], u_ref[1], u_star[0][0], u_star[1][0], self.v_target[0], self.w_target[0], self.obs_x, self.obs_y, self.obs_v_x , self.obs_v_y]
+            s = " ".join(str(i) for i in l)
+            s += '\n'
+            f.write(s)
+            f.close()
 
 
     def obstacle_sub(self, data):
         print("obstacle callback")
+
+        
         x = data.pose.pose.position.x
         y = data.pose.pose.position.y
         # print("odom x, y {x}, {y}")
@@ -335,16 +269,23 @@ class Controller():
         orientation_list = [orientation_q.x, orientation_q.y, orientation_q.z, orientation_q.w]
         (roll, pitch, yaw) = euler_from_quaternion(orientation_list)
         theta = yaw
+        self.theta_list_obs.append(theta)
+        theta = np.unwrap(np.array(self.theta_list_obs))[-1]
 
-        # self.v_obsx = data.twist.twist.linear.x
-        # self.v_obsy = data.twist.twist.linear.y
+        if theta < 0:
+            theta = 2 * np.pi - theta 
+        if len(self.theta_list_obs )>5:
+            self.theta_list_obs.pop(0)
+        print("Tehta list",     np.unwrap(np.array(self.theta_list_obs)))
 
-        self.internal_obs_x = -x + self.obs_offsetx
-        self.internal_obs_x = -y + self.obs_offsety
-        self.internal_obs_x = data.twist.twist.linear.x
-        self.internal_obs_vely = 0
+        self.obs_theta = theta
 
-        print("gt" ,data.pose.pose.position.x, data.pose.pose.position.y,data.twist.twist.linear.x, data.twist.twist.linear.y)
+        v = data.twist.twist.linear.x
+        self.obs_v = v
+        self.obs_x = x 
+        self.obs_y = y 
+        self.obs_v_x = v * np.cos(theta)
+        self.obs_v_y = v * np.sin(theta)
 
 
 
@@ -360,61 +301,61 @@ class Controller():
         # print("dt odom", dt)
         if dt == 0:
             dt = 0.1
-        self.t_prev_odom = t 
 
-        x = data.pose.pose.position.x
-        y = data.pose.pose.position.y
+        if dt > 0.2:
+            self.t_prev_odom = t 
 
-        # print("odom x, y {x}, {y}")
-        orientation_q = data.pose.pose.orientation
-        orientation_list = [orientation_q.x, orientation_q.y, orientation_q.z, orientation_q.w]
-        (roll, pitch, yaw) = euler_from_quaternion(orientation_list)
-        theta = yaw
-        
-        self.v = data.twist.twist.linear.x
-        # print(self.v, "self.v")
+            x = data.pose.pose.position.x
+            y = data.pose.pose.position.y
 
-        self.vx_self = (x - self.x) / dt  
-        self.vy_self = (y - self.y)/ dt 
-        self.w = data.twist.twist.angular.z
-        self.theta_list.append(theta)
-        self.theta_list = np.unwrap(self.theta_list).tolist()
-        if len(self.theta_list) > 5:
-            self.theta_list.pop(0)
+            # print("odom x, y {x}, {y}")
+            orientation_q = data.pose.pose.orientation
+            orientation_list = [orientation_q.x, orientation_q.y, orientation_q.z, orientation_q.w]
+            (roll, pitch, yaw) = euler_from_quaternion(orientation_list)
+            theta = yaw
+            
+            self.v = data.twist.twist.linear.x
+            # print(self.v, "self.v")
 
-        self.theta = self.theta_list[-1] 
+            self.vx_self = (x - self.x) / dt  
+            self.vy_self = (y - self.y)/ dt 
+            self.w = data.twist.twist.angular.z
+            self.theta_list.append(theta)
+            self.theta_list = np.unwrap(self.theta_list).tolist()
+            if len(self.theta_list) > 5:
+                self.theta_list.pop(0)
 
-        # self.bot.update_state(np.array([self.x, self.y]), self.theta, self.v, self.w,dt )
-        self.bot.update_state(np.array([self.x, self.y]), self.theta, self.v, self.w,   dt )
+            self.theta = self.theta_list[-1] 
 
-        self.x = x 
-        self.y = y
+            # self.bot.update_state(np.array([self.x, self.y]), self.theta, self.v, self.w,dt )
+            self.bot.update_state(np.array([self.x, self.y]), self.theta, self.v, self.w,   dt )
+
+            self.x = x 
+            self.y = y
 
 
 
     def run(self):
         rate = rospy.Rate(20)
         tick = 0
-        x = .7
-        v = 0.04
+        x = 2
+        y = -2 
+        v = 0.05
         t0 = time.time()
         while not rospy.is_shutdown():
-            self.publish(2,x,0, -v)
+
+            # self.obs_x = x 
+            # self.obs_y = y
+            # self.obs_v_x = 0
+            # self.obs_v_y = v
+            self.publish(x,0.1,0, 0)
             t = time.time()
             dt = t - t0 
             t0 = t 
-            x = x - v * dt
-            # print("publishing")
-            # if tick%10 ==0:
-                # print("_-------------")
-                # print(f"camera: relx: {self.relx}, rely: {self.rely}, vrelx {self.vrelx}, vrely: {self.vrely}")
-                # print(f"camera: relx: {self.relx_est}, rely: {self.rely_est}, vrelx {self.vrelx_est}, vrely: {self.vrely_est}")
-                # print("---------------")
+            y = y + v * dt
+            
             rate.sleep()    
 
-            tick += 1 
-            if tick == 10:
-                tick = 0
 if __name__ == "__main__":
     rospy.init_node("pid")
     print("blah 8")

@@ -360,7 +360,10 @@ DL_INCLUDE_DIRS:PATH=/usr/include
 DL_LIBRARIES:FILEPATH=/usr/lib/x86_64-linux-gnu/libdl.so
 
 //Path to a program.
-DOXYGEN_EXECUTABLE:FILEPATH=DOXYGEN_EXECUTABLE-NOTFOUND
+DOXYGEN_EXECUTABLE:FILEPATH=/usr/bin/doxygen
+
+//Doxygen found
+DOXYGEN_FOUND:BOOL=TRUE
 
 //Path to a program.
 EMPY_EXECUTABLE:FILEPATH=EMPY_EXECUTABLE-NOTFOUND
@@ -999,6 +1002,27 @@ octomap_DIR:PATH=/usr/lib/x86_64-linux-gnu/octomap
 //Path to a library.
 onelib:FILEPATH=/usr/lib/x86_64-linux-gnu/libgazebo_opende_ou.so
 
+//Value Computed by CMake
+phasespace_bringup_BINARY_DIR:STATIC=/home/rao/Collision-Cone-CBF/build/phasespace-mocap-ros/phasespace_bringup
+
+//Value Computed by CMake
+phasespace_bringup_IS_TOP_LEVEL:STATIC=OFF
+
+//Value Computed by CMake
+phasespace_bringup_SOURCE_DIR:STATIC=/home/rao/Collision-Cone-CBF/src/phasespace-mocap-ros/phasespace_bringup
+
+//Value Computed by CMake
+phasespace_msgs_BINARY_DIR:STATIC=/home/rao/Collision-Cone-CBF/build/phasespace-mocap-ros/phasespace_msgs
+
+//The directory containing a CMake configuration file for phasespace_msgs.
+phasespace_msgs_DIR:PATH=/home/rao/Collision-Cone-CBF/devel/share/phasespace_msgs/cmake
+
+//Value Computed by CMake
+phasespace_msgs_IS_TOP_LEVEL:STATIC=OFF
+
+//Value Computed by CMake
+phasespace_msgs_SOURCE_DIR:STATIC=/home/rao/Collision-Cone-CBF/src/phasespace-mocap-ros/phasespace_msgs
+
 //Path to a library.
 pkgcfg_lib_BULLET_BulletCollision:FILEPATH=/usr/lib/x86_64-linux-gnu/libBulletCollision.so
 
@@ -1407,7 +1431,7 @@ CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_NM
 CMAKE_NM-ADVANCED:INTERNAL=1
 //number of local generators
-CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=18
+CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=20
 //ADVANCED property for variable: CMAKE_OBJCOPY
 CMAKE_OBJCOPY-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_OBJDUMP
@@ -1464,7 +1488,7 @@ CURL_LIBRARY_DEBUG-ADVANCED:INTERNAL=1
 CURL_LIBRARY_RELEASE-ADVANCED:INTERNAL=1
 DART_DEFINITIONS:INTERNAL=
 DART_INCLUDE_DIRS:INTERNAL=/usr/include
-DART_LIBRARIES:INTERNAL=dart
+DART_LIBRARIES:INTERNAL=dart;dart
 //Boost min version requirement
 DART_MIN_BOOST_VERSION:INTERNAL=1.58.0
 DART_dart_DEFINITIONS:INTERNAL=
@@ -1481,7 +1505,7 @@ FIND_PACKAGE_MESSAGE_DETAILS_Boost:INTERNAL=[/usr/lib/x86_64-linux-gnu/cmake/Boo
 //Details about finding CURL
 FIND_PACKAGE_MESSAGE_DETAILS_CURL:INTERNAL=[/usr/lib/x86_64-linux-gnu/libcurl.so][/usr/include/x86_64-linux-gnu][c ][v7.68.0()]
 //Details about finding DART
-FIND_PACKAGE_MESSAGE_DETAILS_DART:INTERNAL=[/usr/include][dart][cfound components: dart ][v(6.6)]
+FIND_PACKAGE_MESSAGE_DETAILS_DART:INTERNAL=[/usr/include][dart;dart][cfound components: dart ][v(6.6)]
 //Details about finding DL
 FIND_PACKAGE_MESSAGE_DETAILS_DL:INTERNAL=[true][v()]
 //Details about finding JSONCPP

@@ -11,10 +11,11 @@ T, X, Y = [], [], []
 
 
 
-no = 588
-robotX, robotY, H, Time, Act, Det = [],[],[],[],[],[]
+no = 9
+robotX, 
+robotY, H, Time, Act, Det = [],[],[],[],[],[]
 Acc, Alpha = [], []
-with open(f"./final_runs/log{no}.txt", "r") as f:
+with open(f"./runs/log{no}.txt", "r") as f:
     lines = f.readlines()
 
     for line in lines:
@@ -32,13 +33,30 @@ with open(f"./final_runs/log{no}.txt", "r") as f:
 
 robotX, robotY, H, Time, Act, Det = np.array(robotX), np.array(robotY), np.array(H),np.array(Time),np.array(Act), np.array(Det)
 col = np.where(Det==0, 'y', np.where(Act == 1, 'r', 'b'))
+Time = Time - Time[0]
 plt.scatter(Time[0],-10, c='y')
 plt.scatter(Time[0],10,c='r')
 plt.scatter(Time[0],10,c='b')
 
 # lab = np.where(Det==0, 'outside perception boundary', np.where(Act == 1, 'cbf active', 'cbf inactive'))
 plt.scatter(Time, H, c=col )
-# plt.plot(Time, H)
+
+# c2 = np.where(Act == 1, 'r', 'b')
+
+# plt.scatter(Time[(Det == 0) & (Time <25)], H[(Det == 0) & (Time < 25)], c='y' )
+# plt.scatter(Time[(Det == 1) & (Act  == 0)], H[(Det == 1) & (Act == 0)], c='b' )
+# plt.scatter(Time[(Det == 1) & (Act  == 1)], H[(Det == 1) & (Act == 1)], c='r' )
+
+# perception_boundary = H[(Det == 0) & (Time > 20) ]
+# coefficients = np.polyfit(Time[(Det == 0) & (Time > 20)], perception_boundary, 2)
+
+# # Create a polynomial function from the coefficients
+# poly_function = np.poly1d(coefficients)
+# points = poly_function(Time[(Det == 0) & (Time > 20)]) 
+# points += + np.random.normal(0, 0.003, points.shape)
+# plt.scatter(Time[(Det == 0) & (Time > 20)], points, c='y' )
+# print(perception_boundary)
+
 plt.ylim(-1, 1)
 plt.legend(['obstacle outside perception boundary', 'cbf active', 'cbf inactive'])
 # plt.legend()
@@ -59,7 +77,7 @@ plt.ylim(-0.5,0.5)
 plt.title("w vs Time")
 plt.show()
 
-with open(f"./final_runs/obstaclepos{no}.txt", "r") as f:
+with open(f"./runs/obstaclepos{no}.txt", "r") as f:
     lines = f.readlines()
     for line in lines:
         if line.find("None") != -1:
@@ -77,7 +95,7 @@ with open(f"./final_runs/obstaclepos{no}.txt", "r") as f:
 
 Tvel, Xvel, Yvel = [], [], []
 Xvel_gt, Yvel_gt, X_gt, Y_gt = [],[],[],[]
-with open(f"./final_runs/obstaclevel{no}.txt", "r") as f:
+with open(f"./runs/obstaclevel{no}.txt", "r") as f:
     lines = f.readlines()
     for line in lines:
         if line.find("None") != -1:
@@ -100,7 +118,7 @@ with open(f"./final_runs/obstaclevel{no}.txt", "r") as f:
 # plt.show()
 
 robotx, roboty, active = [], [], []
-with open(f"./final_runs/gt{no}.txt", "r") as f:
+with open(f"./runs/gt{no}.txt", "r") as f:
     lines = f.readlines()
     for line in lines:
         _, x,y,vx,vy = list(map(float, line.split()))
@@ -109,7 +127,7 @@ with open(f"./final_runs/gt{no}.txt", "r") as f:
         Xvel_gt.append(vx)
         Yvel_gt.append(vy)
 
-with open(f"./final_runs/robotpos{no}.txt", "r") as f:
+with open(f"./runs/robotpos{no}.txt", "r") as f:
     lines = f.readlines()
     for line in lines:
         if line.find("None") != -1:
@@ -131,12 +149,14 @@ roboty = np.array(roboty)
 active = np.array(active)
 
 plt.scatter(2,2,c='r')
+plt.scatter(2,2,c='b')
+plt.scatter(2,2,c='y')
 col = np.where(active==1, 'r', 'b')
 col = np.where(Det==0, 'y', np.where(Act == 1, 'r', 'b'))
 plt.scatter(robotx, roboty, c=col)
-plt.scatter(2,0,c='g', s=150)
+# plt.scatter(2,0,c='g', s=150)
 plt.title("robotx vs roboty")
-plt.legend(['cbf active', 'cbf inactive', 'obstacle'])
+plt.legend(['cbf active', 'cbf inactive','obstacle outside perception boundary' 'obstacle'])
 plt.ylim(-1.5,1.5)
 plt.show()
 
