@@ -66,7 +66,7 @@ roslaunch ackermann_vehicle_gazebo ackermann_single_obstacle.launch
 ```
 #### Open a new terminal and enter the following
 ```
-cd ~/catkin_ws/src/scripts/turtlebot/
+cd ~/catkin_ws/src/scripts/ackermann/
 python3 pid.py
 ```
 
@@ -78,8 +78,6 @@ roslaunch ackermann_vehicle_gazebo ackermann_multi_obstacle.launch
 ```
 #### Open a new terminal and enter the following
 ```
-cd ~/catkin_ws/src/scripts/turtlebot/
+cd ~/catkin_ws/src/scripts/ackermann/
 python3 pid.py
 ```
-
-
