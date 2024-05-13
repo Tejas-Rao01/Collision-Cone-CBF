@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import rospy 
-from typing import Tuple
+from typing import Tuple, List
 
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
@@ -166,9 +166,16 @@ class Controller():
         vars = [t, self.bot.x, self.bot.y, self.bot.theta, self.bot.v, self.bot.w, u_ref[0], u_ref[1], u_star[0][0], u_star[1][0], self.v_target[0], self.w_target[0], self.obs_x, self.obs_y, self.obs_v_x , self.obs_v_y]
         self.log(vars)
 
-    def log(self, vars):
-
+    def log(self, vars: List[float]) -> None:
+        """
+        Appends the given list of variables to the log file.
         
+        Args:
+            vars: List of floats containing the values to be logged.
+        
+        Returns:
+            None
+        """
         with open(self.file_path, "a") as f:
             s = " ".join(str(i) for i in vars)
             s += '\n'

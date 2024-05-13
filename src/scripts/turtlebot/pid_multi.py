@@ -177,54 +177,9 @@ class Controller():
         # print("a, alpha", a, alpha) 
     
         return a, alpha
-    
-
-    def pid_obs(self):
-
-        
-        # if self.x > 3.2:
-        #     self.goaly = 0.2
-
-        desired_heading = -(np.arctan2((0.1 - self.obs_y), 0.9))
-        print("term 1" , desired_heading)
-        # if desired_heading < 0:
-        #     desired_heading = np.pi * 2 + desired_heading
-        delta_theta =  (desired_heading - self.obs_theta + np.pi) 
-        # delta_theta = ((delta_theta + np.pi)%(2.0*np.pi)) - np.pi
-        print("term 1" , desired_heading)
-        print("delta theta", delta_theta)
-        print("obs theta", self.obs_theta)
-        # delta_theta = np.pi/2 - self.thet.a
-
-        #Error is delta_theta in degrees
-        e_new = delta_theta
-        
-        e_dot = (e_new - self.prev_heading_error_obs)/self.dt 
-        # print("enew", e_new)1
-        # print("slef. theta", 11self.theta)
-        print("edot", e_dot)
-        # print("etheta, edottheta"?, e_new, e_dot)
-        alpha = (0.5    *e_new) + (2 *e_dot)
-        self.prev_heading_error_obs = e_new 
-        
-        # self.v = np.sqrt(self.vx_self **2 + self.vy_self ** 2 )
-
-        # print("selfvxvy", self.vx_self, self.vy_self)
-        e_v = (0.08- self.obs_v ) 
-        # print("e_v", e_v)
-        # print("self.v", self.v)
-        e_vdot = (e_v - self.prev_vel_error_obs) / self.dt
-        self.prev_vel_error_obs = e_v 
-        # print(e_v, e_vdot)
-        # print("e-v * kp", self.Kp2 * e_v)
-        a = self.Kp2 * e_v  + self.Kd2 * (e_vdot) 
-        print("a, alpha", a, alpha) 
-    
-        return a, alpha
 
 
-
-    def publish(self, obs_x, obs_y, obs_v_x, obs_v_y):
+    def publish(self):
         t = time.time()
         a, alpha = self.pid()
         

@@ -12,8 +12,7 @@ T, X, Y = [], [], []
 
 
 no = 9
-robotX, 
-robotY, H, Time, Act, Det = [],[],[],[],[],[]
+robotX, robotY, H, Time, Act, Det = [],[],[],[],[],[]
 Acc, Alpha = [], []
 with open(f"./runs/log{no}.txt", "r") as f:
     lines = f.readlines()

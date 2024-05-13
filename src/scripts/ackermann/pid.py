@@ -11,9 +11,9 @@ import matplotlib.pyplot as plt
 import cv2 
 import cv_bridge
 import sys
-sys.path.append('/home/rao/Downloads/F1-C3BF')
-sys.path.append('/home/rao/Downloads/F1-C3BF/controllers')
-sys.path.append('/home/rao/Downloads/F1-C3BF/bots')
+sys.path.append('./F1-C3BF')
+sys.path.append('./F1-C3BF/controllers')
+sys.path.append('./F1-C3BF/bots')
 from bots.Bicycle import Bicycle
 from controllers.QP_controller_bicycle import QP_Controller_Bicycle
 from gazebo_msgs.msg import ModelStates 
@@ -88,10 +88,9 @@ class Controller():
 
         # Init the folders for plotting 
         self.run_no = "./run_no.txt" # Obtain the current run number 
-        plt_folder_path = "./log" # Path to the folder to save data
-        self.init_files(plt_folder_path)
+        self.init_files()
 
-    def init_files(self, folder_path):
+    def init_files(self):
 
         with open("./run_no.txt", "r") as f:
             l = f.readline()
@@ -101,40 +100,43 @@ class Controller():
         with open("./run_no.txt", "w") as f:
             f.write(str(self.no + 1))
         
-        self.file_path5 = f"./log/cbf{self.no}.txt"
+        self.file_path = f"./log/cbf{self.no}.txt"
 
     def log(self, file_path, vars:list):
         with open(file_path, 'a') as f:
-            # print("filepath ", file_path)
             s = " ".join(str(i) for i in vars)
             s += '\n'
             f.write(s)
             f.close()
 
-
     def pid(self):
-        
-        # Obtain dt
+        """
+        Compute the alpha and a values using PID control.
+
+        Returns:
+            Tuple[float, float]: The computed alpha and a values.
+        """
+
+        # Obtain the time difference dt
         t_curr = time.time()
         self.dt = t_curr - self.t_prev 
         self.t_prev = t_curr 
 
-        # Trajectory heading 
+        # Compute the trajectory heading delta and the crosstrack error
+        #   psi is the angle between the robot's heading and the x-axis
+        #   delta is the steering angle needed to follow the trajectory
         psi = 0 - self.theta
-        crosstrack = np.arctan2(self.k * (0.2-self.y), (self.ks + self.v) ) 
+        crosstrack = np.arctan2(self.k * (0.2 - self.y), (self.ks + self.v) )
         delta = psi + crosstrack 
-        e_v = (self.v_des- self.v ) 
+
+        # Compute the velocity error and its derivative
+        e_v = self.v_des - self.v 
         e_vdot = (e_v - self.prev_vel_error) / self.dt
         self.prev_vel_error = e_v 
-        a = self.Kp2 * e_v  + self.Kd2 * (e_vdot) 
 
+        # Compute the control input a using PID gains
+        a = self.Kp2 * e_v + self.Kd2 * e_vdot 
 
-        print("psi", psi)
-        print("cross track", crosstrack)
-        print("num", self.k * (1-self.y))
-        print("den",(self.ks + self.v) )
-        print("delta", delta)
-        
         return delta, a
 
 
@@ -215,7 +217,7 @@ class Controller():
 
 
         var = [t, self.bot.x, self.bot.y, self.bot.theta, self.bot.v,  u_ref[0], u_ref[1], u_star[0][0], u_star[1][0] , self.v_target[0], self.obs_x, self.obs_y, self.obs_v_x , self.obs_v_y]
-        self.log(self.file_path5,  vars=var )
+        self.log(self.file_path,  vars=var )
 
         pub_v = self.v_target #* 0.033
         ack = AckermannDrive()
@@ -309,14 +311,14 @@ class Controller():
 
     def run(self):
         rate = rospy.Rate(20)
-        # time.sleep(0.3)
         while not rospy.is_shutdown():
             t1 = time.time()
             self.publish()
             t2 = time.time()
 
             print("--------------")
-            print("imferemce time", t2-t1)
+            print("inference time", t2-t1)
+            print("--------------")
             rate.sleep()    
 
 if __name__ == "__main__":
