@@ -1,6 +1,8 @@
 # Collision-Cone-CBF
 
-## This repo contains the code for Collision Cone Control Barrier Functions (C3BFs), based on [this paper](https://www.google.com/url?sa=t&source=web&rct=j&opi=89978449&url=https://arxiv.org/pdf/2209.11524&ved=2ahUKEwjIuoWN74mGAxU3-zgGHfGNDjAQFnoECB8QAQ&usg=AOvVaw1tP28HeSzucpQmdhTHB6b3). Code is provided for both Bicycle and Unicycle model robots. 
+## This repo contains the code for Collision Cone Control Barrier Functions (C3BFs), based on [this paper](https://www.google.com/url?sa=t&source=web&rct=j&opi=89978449&url=https://arxiv.org/pdf/2209.11524&ved=2ahUKEwjIuoWN74mGAxU3-zgGHfGNDjAQFnoECB8QAQ&usg=AOvVaw1tP28HeSzucpQmdhTHB6b3). Code is provided for both Bicycle and Unicycle model robots. hown
+
+## Shown below is a video containing hardware demonstrations of the controller for both unicycle and bicycle model robots.
 
 https://github.com/Tejas-Rao01/Collision-Cone-CBF/assets/60615539/2e33a566-d3da-431b-8edd-0cbffeaae4a4
 
