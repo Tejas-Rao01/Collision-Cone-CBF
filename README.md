@@ -33,22 +33,48 @@ source devel/setup.bash
 
 ## Gazebo Simulations
 ### Unicycle with single obstacles
+
+#### To launch the simulation
 ```
 roslaunch turtlebot3_gazebo turtlebot3_single_obstacle.launch
+``` 
+#### Open a new terminal and enter the following
+```
+cd ~/catkin_ws/src/scripts/turtlebot/
+python3 pid.py
 ```
 
 ### Unicycle with multiple obstacles
+#### To launch the simulation
 ```
 roslaunch turtlebot3_gazebo turtlebot3_multi_obstacle.launch
 ```
+#### Open a new terminal and enter the following
+```
+cd ~/catkin_ws/src/scripts/turtlebot/
+python3 pid.py
+```
+
 ### Bicycle with single obstacles
+#### To launch the simulation
 ```
 roslaunch ackermann_vehicle_gazebo ackermann_single_obstacle.launch
 ```
+#### Open a new terminal and enter the following
+```
+cd ~/catkin_ws/src/scripts/turtlebot/
+python3 pid.py
+```
 
 ### Bicycle with multiple obstacles
+#### To launch the simulation
 ```
 roslaunch ackermann_vehicle_gazebo ackermann_multi_obstacle.launch
+```
+#### Open a new terminal and enter the following
+```
+cd ~/catkin_ws/src/scripts/turtlebot/
+python3 pid.py
 ```
 
 
